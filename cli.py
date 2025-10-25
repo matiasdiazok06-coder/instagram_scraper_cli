@@ -363,5 +363,29 @@ def main() -> None:
     interactive_loop(service)
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Scraper básico de Instagram (instagrapi) - CLI")
+    parser.add_argument("--session", help="Archivo session.json", default="session.json")
+    parser.add_argument("--username-mi-cuenta", help="Usuario para login (si no usas session existente)")
+    parser.add_argument("--password", help="Password para login")
+    parser.add_argument("--proxy", help="Proxy opcional")
+    parser.add_argument("--targets", nargs="*", help="Lista de usernames objetivo")
+    parser.add_argument("--targets-file", help="Archivo con usernames (uno por línea)")
+    parser.add_argument("--out-file", default="result.csv")
+    parser.add_argument("--delay", type=float, default=2.0, help="Segundos de espera entre requests")
+    parser.add_argument("--menu", action="store_true", help="Mostrar menú interactivo")
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if args.menu or (not args.targets and not args.targets_file):
+        args = interactive_menu(args)
+
+    run_scraper(args)
+
+
 if __name__ == "__main__":
     main()

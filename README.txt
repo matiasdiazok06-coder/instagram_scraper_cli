@@ -1,26 +1,4 @@
 INSTAGRAM SCRAPER CLI - propiedad de matidiazlife/elite
-======================================================
-
-Requisitos
-----------
-* Python 3.11 o superior instalado en el sistema (`python3` en macOS/Linux, `py -3` en Windows).
-* Acceso a Internet para instalar dependencias y comunicarse con Instagram.
-
-Instalación rápida
-------------------
-1. Descomprime el proyecto en tu escritorio.
-2. Abre una terminal en la carpeta `instagram_scraper_cli`.
-3. Ejecuta el script según tu sistema operativo:
-
-   **macOS / Linux**
-   ```bash
-   cd "$HOME/Escritorio/instagram_scraper_cli"
-   ./run.sh
-   ```
-
-   **Windows (PowerShell o CMD)**
-   ```cmd
-   cd %USERPROFILE%\Desktop\instagram_scraper_cli
    run.bat
    ```
 
