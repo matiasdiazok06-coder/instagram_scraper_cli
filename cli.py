@@ -6,13 +6,22 @@ cli.py - Extrae info básica de usuarios de Instagram usando instagrapi.
 import argparse
 import csv
 import json
-import time
 import sys
+import time
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from instagrapi import Client
-from instagrapi.exceptions import ClientError, ChallengeRequired, TwoFactorRequired
+try:
+    from instagrapi import Client
+    from instagrapi.exceptions import ClientError, ChallengeRequired, TwoFactorRequired
+except ModuleNotFoundError as exc:  # pragma: no cover - feedback para instalaciones incompletas
+    missing = exc.name
+    print(
+        "[ERROR] Falta la dependencia '%s'. Ejecuta 'pip install -r requirements.txt' "
+        "(o ./run.sh en macOS/Linux, run.bat en Windows) para completar la instalación." % missing,
+        file=sys.stderr,
+    )
+    sys.exit(3)
 
 
 def save_json(path: str, data):
@@ -75,9 +84,20 @@ def fetch_user_info(cl: Client, username: str) -> Dict[str, Any]:
                 return val
         return default
     followers = g(user, "follower_count", "followers_count", "followerCount")
-    media_count = g(user, "media_count", "media_count")
-    is_private = g(user, "is_private", "is_private")
-    is_verified = g(user, "is_verified", "is_verified")
+    media_count = g(user, "media_count")
+    is_private = g(user, "is_private")
+    is_verified = g(user, "is_verified")
+    biography = g(user, "biography", default="") or ""
+    biography = biography.replace("\r", " ").replace("\n", " ").strip()
+    has_highlights = g(
+        user,
+        "has_highlight_reels",
+        "has_highlight_reel",
+        "highlight_reel_count",
+        default=False,
+    )
+    if isinstance(has_highlights, (int, float)):
+        has_highlights = has_highlights > 0
     return {
         "username": g(user, "username", default=username),
         "pk": g(user, "pk"),
@@ -85,7 +105,10 @@ def fetch_user_info(cl: Client, username: str) -> Dict[str, Any]:
         "followers": followers,
         "media_count": media_count,
         "is_private": bool(is_private),
+        "is_public": not bool(is_private) if is_private is not None else "",
         "is_verified": bool(is_verified),
+        "biography": biography,
+        "has_highlight_reels": bool(has_highlights),
         "follower_bucket": follower_bucket(followers) if isinstance(followers, int) else "unknown",
     }
 
@@ -124,7 +147,20 @@ def main():
         results.append(info)
         time.sleep(args.delay)
 
-    keys = ["username", "pk", "full_name", "followers", "media_count", "is_private", "is_verified", "follower_bucket", "error"]
+    keys = [
+        "username",
+        "pk",
+        "full_name",
+        "followers",
+        "media_count",
+        "is_private",
+        "is_public",
+        "is_verified",
+        "biography",
+        "has_highlight_reels",
+        "follower_bucket",
+        "error",
+    ]
     with open(args.out_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=keys)
         writer.writeheader()
