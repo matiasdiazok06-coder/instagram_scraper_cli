@@ -11,8 +11,17 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-from instagrapi import Client
-from instagrapi.exceptions import ClientError, ChallengeRequired, TwoFactorRequired
+try:
+    from instagrapi import Client
+    from instagrapi.exceptions import ClientError, ChallengeRequired, TwoFactorRequired
+except ModuleNotFoundError as exc:  # pragma: no cover - feedback para instalaciones incompletas
+    missing = exc.name
+    print(
+        "[ERROR] Falta la dependencia '%s'. Ejecuta 'pip install -r requirements.txt' "
+        "(o ./run.sh en macOS/Linux, run.bat en Windows) para completar la instalación." % missing,
+        file=sys.stderr,
+    )
+    sys.exit(3)
 
 
 def save_json(path: str, data):
