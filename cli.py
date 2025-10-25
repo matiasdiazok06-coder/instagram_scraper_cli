@@ -38,6 +38,16 @@ if sys.version_info >= (3, 14):  # pragma: no cover - mensaje informativo
 
 console = Console()
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Herramienta interactiva para scraping de Instagram.",
+    )
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Forzar el menú interactivo (por defecto se muestra si no se pasan argumentos).",
+    )
+    return parser
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -50,6 +60,263 @@ def build_parser() -> argparse.ArgumentParser:
     )
     return parser
 
+def render_header(subtitle: str | None = None) -> None:
+    text = APP_HEADER
+    if subtitle:
+        text += f"\n[bold cyan]{subtitle}[/bold cyan]"
+    console.print(Panel(text, expand=False, border_style="magenta", box=box.DOUBLE))
+
+
+def prompt_filters() -> FilterCriteria | None:
+    console.print("\n[bold]Configurar filtros opcionales[/bold]")
+    if not Confirm.ask("¿Deseas aplicar filtros a los resultados?", default=False):
+        return None
+
+    min_followers = _prompt_optional_int("Mínimo de seguidores (enter para omitir): ")
+    max_followers = _prompt_optional_int("Máximo de seguidores (enter para omitir): ")
+    min_posts = _prompt_optional_int("Mínimo de publicaciones (enter para omitir): ")
+
+    require_public: bool | None = None
+    if Confirm.ask("¿Filtrar por cuentas públicas?", default=False):
+        require_public = True
+    elif Confirm.ask("¿Filtrar por cuentas privadas?", default=False):
+        require_public = False
+
+    require_verified = Confirm.ask("¿Solo cuentas verificadas?", default=False)
+    require_highlights = Confirm.ask("¿Solo cuentas con historias destacadas?", default=False)
+
+    return FilterCriteria(
+        min_followers=min_followers,
+        max_followers=max_followers,
+        min_posts=min_posts,
+        require_public=require_public,
+        require_verified=require_verified,
+        require_highlights=require_highlights,
+    )
+
+
+def _prompt_optional_int(message: str) -> int | None:
+    value = Prompt.ask(message, default="", show_default=False)
+    if not value:
+        return None
+    try:
+        number = int(value)
+    except ValueError:
+        console.print("[red]Valor inválido. Se ignorará.")
+        return None
+    return number
+
+
+def ensure_logged_in(service: ScraperService) -> bool:
+    if service.is_logged_in():
+        return True
+    console.print("[yellow]No hay una sesión activa. Inicia sesión primero.[/yellow]")
+    return False
+
+
+def handle_login(service: ScraperService) -> None:
+    render_header("Inicio de sesión")
+    session_path = get_session_path()
+    meta = load_session_meta()
+
+    if session_path.exists():
+        msg = "Se encontró una sesión guardada."
+        if meta.get("username"):
+            msg += f" Usuario almacenado: [bold]{meta['username']}[/bold]."
+        console.print(msg)
+        if Confirm.ask("¿Quieres intentar reutilizar la sesión existente?", default=True):
+            try:
+                client = service.ensure_client()
+                client.load_settings(str(session_path))
+                client.account_info()
+                service.mark_authenticated(meta.get("username"))
+                console.print("[green]Sesión reutilizada correctamente.[/green]\n")
+                return
+            except Exception as exc:  # pragma: no cover
+                console.print(
+                    f"[yellow]No fue posible reutilizar la sesión automáticamente: {exc}. Se solicitarán credenciales.[/yellow]"
+                )
+
+    username = Prompt.ask("Usuario de Instagram", default=meta.get("username", ""))
+    if not username:
+        console.print("[red]Debes ingresar un usuario válido.[/red]")
+        return
+    password = Prompt.ask("Contraseña", password=True)
+    if not password:
+        console.print("[red]Debes ingresar una contraseña.[/red]")
+        return
+
+def render_header(subtitle: str | None = None) -> None:
+    text = APP_HEADER
+    if subtitle:
+        text += f"\n[bold cyan]{subtitle}[/bold cyan]"
+    console.print(Panel(text, expand=False, border_style="magenta", box=box.DOUBLE))
+
+
+def prompt_filters() -> FilterCriteria | None:
+    console.print("\n[bold]Configurar filtros opcionales[/bold]")
+    if not Confirm.ask("¿Deseas aplicar filtros a los resultados?", default=False):
+        return None
+
+    min_followers = _prompt_optional_int("Mínimo de seguidores (enter para omitir): ")
+    max_followers = _prompt_optional_int("Máximo de seguidores (enter para omitir): ")
+    min_posts = _prompt_optional_int("Mínimo de publicaciones (enter para omitir): ")
+
+    require_public: bool | None = None
+    if Confirm.ask("¿Filtrar por cuentas públicas?", default=False):
+        require_public = True
+    elif Confirm.ask("¿Filtrar por cuentas privadas?", default=False):
+        require_public = False
+
+    require_verified = Confirm.ask("¿Solo cuentas verificadas?", default=False)
+    require_highlights = Confirm.ask("¿Solo cuentas con historias destacadas?", default=False)
+
+    return FilterCriteria(
+        min_followers=min_followers,
+        max_followers=max_followers,
+        min_posts=min_posts,
+        require_public=require_public,
+        require_verified=require_verified,
+        require_highlights=require_highlights,
+    )
+
+
+def _prompt_optional_int(message: str) -> int | None:
+    value = Prompt.ask(message, default="", show_default=False)
+    if not value:
+        return None
+    try:
+        number = int(value)
+    except ValueError:
+        console.print("[red]Valor inválido. Se ignorará.")
+        return None
+    return number
+
+
+def ensure_logged_in(service: ScraperService) -> bool:
+    if service.is_logged_in():
+        return True
+    console.print("[yellow]No hay una sesión activa. Inicia sesión primero.[/yellow]")
+    return False
+
+
+def handle_login(service: ScraperService) -> None:
+    render_header("Inicio de sesión")
+    session_path = get_session_path()
+    meta = load_session_meta()
+
+    if session_path.exists():
+        msg = "Se encontró una sesión guardada."
+        if meta.get("username"):
+            msg += f" Usuario almacenado: [bold]{meta['username']}[/bold]."
+        console.print(msg)
+        if Confirm.ask("¿Quieres intentar reutilizar la sesión existente?", default=True):
+            try:
+                client = service.ensure_client()
+                client.load_settings(str(session_path))
+                client.account_info()
+                service.mark_authenticated(meta.get("username"))
+                console.print("[green]Sesión reutilizada correctamente.[/green]\n")
+                return
+            except Exception as exc:  # pragma: no cover
+                console.print(
+                    f"[yellow]No fue posible reutilizar la sesión automáticamente: {exc}. Se solicitarán credenciales.[/yellow]"
+                )
+
+    username = Prompt.ask("Usuario de Instagram", default=meta.get("username", ""))
+    if not username:
+        console.print("[red]Debes ingresar un usuario válido.[/red]")
+        return
+    password = Prompt.ask("Contraseña", password=True)
+    if not password:
+        console.print("[red]Debes ingresar una contraseña.[/red]")
+        return
+
+def render_header(subtitle: str | None = None) -> None:
+    text = APP_HEADER
+    if subtitle:
+        text += f"\n[bold cyan]{subtitle}[/bold cyan]"
+    console.print(Panel(text, expand=False, border_style="magenta", box=box.DOUBLE))
+
+
+def prompt_filters() -> FilterCriteria | None:
+    console.print("\n[bold]Configurar filtros opcionales[/bold]")
+    if not Confirm.ask("¿Deseas aplicar filtros a los resultados?", default=False):
+        return None
+
+    min_followers = _prompt_optional_int("Mínimo de seguidores (enter para omitir): ")
+    max_followers = _prompt_optional_int("Máximo de seguidores (enter para omitir): ")
+    min_posts = _prompt_optional_int("Mínimo de publicaciones (enter para omitir): ")
+
+    require_public: bool | None = None
+    if Confirm.ask("¿Filtrar por cuentas públicas?", default=False):
+        require_public = True
+    elif Confirm.ask("¿Filtrar por cuentas privadas?", default=False):
+        require_public = False
+
+    require_verified = Confirm.ask("¿Solo cuentas verificadas?", default=False)
+    require_highlights = Confirm.ask("¿Solo cuentas con historias destacadas?", default=False)
+
+    return FilterCriteria(
+        min_followers=min_followers,
+        max_followers=max_followers,
+        min_posts=min_posts,
+        require_public=require_public,
+        require_verified=require_verified,
+        require_highlights=require_highlights,
+    )
+
+
+def _prompt_optional_int(message: str) -> int | None:
+    value = Prompt.ask(message, default="", show_default=False)
+    if not value:
+        return None
+    try:
+        number = int(value)
+    except ValueError:
+        console.print("[red]Valor inválido. Se ignorará.")
+        return None
+    return number
+
+
+def ensure_logged_in(service: ScraperService) -> bool:
+    if service.is_logged_in():
+        return True
+    console.print("[yellow]No hay una sesión activa. Inicia sesión primero.[/yellow]")
+    return False
+
+
+def handle_login(service: ScraperService) -> None:
+    render_header("Inicio de sesión")
+    session_path = get_session_path()
+    meta = load_session_meta()
+
+    if session_path.exists():
+        msg = "Se encontró una sesión guardada."
+        if meta.get("username"):
+            msg += f" Usuario almacenado: [bold]{meta['username']}[/bold]."
+        console.print(msg)
+        if Confirm.ask("¿Quieres intentar reutilizar la sesión existente?", default=True):
+            try:
+                client = service.ensure_client()
+                client.load_settings(str(session_path))
+                client.account_info()
+                service.mark_authenticated(meta.get("username"))
+                console.print("[green]Sesión reutilizada correctamente.[/green]\n")
+                return
+            except Exception as exc:  # pragma: no cover
+                console.print(
+                    f"[yellow]No fue posible reutilizar la sesión automáticamente: {exc}. Se solicitarán credenciales.[/yellow]"
+                )
+
+    username = Prompt.ask("Usuario de Instagram", default=meta.get("username", ""))
+    if not username:
+        console.print("[red]Debes ingresar un usuario válido.[/red]")
+        return
+    password = Prompt.ask("Contraseña", password=True)
+    if not password:
+        console.print("[red]Debes ingresar una contraseña.[/red]")
+        return
 
 def render_header(subtitle: str | None = None) -> None:
     text = APP_HEADER
