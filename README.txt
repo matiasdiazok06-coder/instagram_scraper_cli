@@ -19,7 +19,8 @@ macOS / Linux
 
 > **Notas:**
 > - Se requiere Python 3.9 o superior. Si cuentas con Python 3.10+ se instalarán las
->   dependencias más nuevas automáticamente; con 3.9 se usan versiones compatibles.
+>   dependencias más nuevas automáticamente; con 3.9 se usan versiones compatibles
+>   (pydantic 1.x y pydantic-settings 1.x) para evitar conflictos de instalación.
 > - Los scripts usan un entorno virtual en `.venv`. Si la descarga de dependencias
 >   falla por un proxy o falta de certificados, vuelve a ejecutar el script una vez
 >   resuelto el acceso a Internet.
