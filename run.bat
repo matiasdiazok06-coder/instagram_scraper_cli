@@ -25,27 +25,32 @@ for /f "tokens=1,2 delims=." %%a in ("%PY_VERSION%") do (
 )
 set /a PY_VERSION_NUM=%PY_MAJOR%*100+%PY_MINOR%
 
+set "PIP_PREFER_BINARY=1"
+
 echo Actualizando herramientas base de instalacion...
 python -m pip install --upgrade pip setuptools wheel || goto :error
 
 if %PY_VERSION_NUM% GEQ 314 (
-  echo ⚠️  Python %PY_VERSION% detectado. Algunas dependencias requieren versiones preliminares compatibles.
-  python -m pip install --upgrade --pre pydantic-core pydantic
+  echo ⚠️  Python %PY_VERSION% detectado. Intentando usar paquetes precompilados compatibles.
+  python -m pip install --upgrade --pre --only-binary=:all: "pydantic-core>=2.27.0" "pydantic>=2.9.2"
   if errorlevel 1 (
-    echo Intentando instalación mediante binarios precompilados de pydantic-core...
-    where rustc >nul 2>nul
-    if errorlevel 1 (
-      python -m pip install --only-binary=:all: --upgrade pydantic-core || goto :error
-    ) else (
-      set "PIP_ONLY_BINARY=:all:"
-      python -m pip install --upgrade pydantic-core || goto :error
-      set "PIP_ONLY_BINARY="
-    )
-    python -m pip install --upgrade --pre pydantic || goto :error
+    echo ⚠️  No se encontraron binarios compatibles de pydantic-core o pydantic para Python 3.14 o superior.
+    echo     Para evitar compilaciones fallidas, instala Python 3.13.x recomendado con pyenv o Microsoft Store y vuelve a ejecutar run.bat.
+    goto :error
   )
+) else (
+  python -m pip install --upgrade "pydantic-core>=2.27.0" "pydantic>=2.9.2" || goto :error
 )
 
-python -m pip install --upgrade -r requirements.txt || goto :error
+python -m pip install --upgrade --no-cache-dir -r requirements.txt
+if errorlevel 1 (
+  if %PY_VERSION_NUM% GEQ 314 (
+    echo [ERROR] La instalacion de dependencias fallo con Python %PY_VERSION%. Se recomienda usar Python 3.13 para maxima estabilidad.
+  )
+  goto :error
+)
+
+set "PIP_PREFER_BINARY="
 
 echo.
 echo === Menú interactivo ===

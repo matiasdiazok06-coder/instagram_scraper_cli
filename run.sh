@@ -14,6 +14,8 @@ fi
 if [ ! -d "$VENV_DIR" ]; then
   echo "Creando entorno virtual..."
   "$PYTHON_BIN" -m venv "$VENV_DIR"
+else
+  echo "Reutilizando entorno virtual existente..."
 fi
 
 # shellcheck disable=SC1090
@@ -23,31 +25,29 @@ PY_VERSION=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.versio
 PY_MAJOR=$(python -c 'import sys; print(sys.version_info.major)')
 PY_MINOR=$(python -c 'import sys; print(sys.version_info.minor)')
 
+export PIP_PREFER_BINARY=1
+
 python -m pip install --upgrade pip setuptools wheel
 
 if [ "$PY_MAJOR" -gt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -ge 14 ]; }; then
-  echo "⚠️  Python $PY_VERSION detectado. Algunas dependencias pueden requerir versiones preliminares compatibles."
-  if ! python -m pip install --upgrade --pre pydantic-core pydantic; then
-    echo "Intentando instalación mediante binarios precompilados de pydantic-core..."
-    if command -v rustc >/dev/null 2>&1; then
-      if ! PIP_ONLY_BINARY=:all: python -m pip install --upgrade pydantic-core; then
-        echo "No se pudo instalar pydantic-core incluso forzando binarios." >&2
-        exit 1
-      fi
-    else
-      if ! python -m pip install --only-binary=:all: --upgrade pydantic-core; then
-        echo "No se pudo instalar pydantic-core con binarios precompilados." >&2
-        exit 1
-      fi
-    fi
-    if ! python -m pip install --upgrade --pre pydantic; then
-      echo "No se pudo actualizar pydantic a una versión compatible." >&2
-      exit 1
-    fi
+  echo "⚠️  Python $PY_VERSION detectado. Intentando usar paquetes precompilados compatibles."
+  if ! python -m pip install --upgrade --pre --only-binary=:all: "pydantic-core>=2.27.0" "pydantic>=2.9.2"; then
+    cat <<'EOF'
+⚠️  No se encontraron binarios compatibles de pydantic-core/pydantic para Python 3.14 o superior.
+    Para evitar compilaciones fallidas, instala Python 3.13.x (recomendado con pyenv) y vuelve a ejecutar ./run.sh.
+EOF
+    exit 1
   fi
+else
+  python -m pip install --upgrade "pydantic-core>=2.27.0" "pydantic>=2.9.2"
 fi
 
-python -m pip install --upgrade -r requirements.txt
+if ! python -m pip install --upgrade --no-cache-dir -r requirements.txt; then
+  if [ "$PY_MAJOR" -gt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -ge 14 ]; }; then
+    echo "[ERROR] La instalación de dependencias falló con Python $PY_VERSION. Se recomienda usar Python 3.13 para máxima estabilidad." >&2
+  fi
+  exit 1
+fi
 
 echo -e "\n=== Menú interactivo ==="
 python cli.py
