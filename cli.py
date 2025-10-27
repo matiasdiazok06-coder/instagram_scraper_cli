@@ -9,7 +9,9 @@ import sys
 from pathlib import Path
 from typing import Iterable, List
 
-os.environ.setdefault("PYDANTIC_V1", "1")
+from compat import ensure_pydantic_compat
+
+ensure_pydantic_compat()
 
 import pandas as pd
 from rich import box
@@ -47,16 +49,6 @@ if sys.version_info >= (3, 14):  # pragma: no cover - mensaje informativo
 
 console = Console()
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Herramienta interactiva para scraping de Instagram.",
-    )
-    parser.add_argument(
-        "--interactive",
-        action="store_true",
-        help="Forzar el menú interactivo (por defecto se muestra si no se pasan argumentos).",
-    )
-    return parser
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

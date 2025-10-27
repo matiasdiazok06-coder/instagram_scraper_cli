@@ -9,7 +9,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
 
-os.environ.setdefault("PYDANTIC_V1", "1")
+from compat import ensure_pydantic_compat
+
+ensure_pydantic_compat()
 
 try:
     from instagrapi import Client

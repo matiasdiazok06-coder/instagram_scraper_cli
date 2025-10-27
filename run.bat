@@ -65,11 +65,11 @@ if errorlevel 1 (
   goto :error
 )
 
-python -c "import instagrapi; from instagrapi import exceptions" 1>nul 2>nul
+python -c "from compat import ensure_pydantic_compat; ensure_pydantic_compat(); import instagrapi; from instagrapi import exceptions" 1>nul 2>nul
 if errorlevel 1 (
   echo Reinstalando instagrapi para asegurar modulos completos...
   python -m pip install --force-reinstall --no-cache-dir --no-deps %INSTAGRAPI_SPEC%
-  python -c "import instagrapi; from instagrapi import exceptions" 1>nul 2>nul
+  python -c "from compat import ensure_pydantic_compat; ensure_pydantic_compat(); import instagrapi; from instagrapi import exceptions" 1>nul 2>nul
   if errorlevel 1 goto :error
 )
 

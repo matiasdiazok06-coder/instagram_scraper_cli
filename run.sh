@@ -68,7 +68,10 @@ EOW
 fi
 
 if ! python - <<'PY'
-import sys
+from compat import ensure_pydantic_compat
+
+ensure_pydantic_compat()
+
 try:
     import instagrapi  # noqa: F401
     from instagrapi import exceptions  # noqa: F401
@@ -79,7 +82,10 @@ then
   echo "Reinstalando instagrapi para asegurar módulos completos..."
   python -m pip install --force-reinstall --no-cache-dir --no-deps "$INSTAGRAPI_SPEC"
   python - <<'PY'
-import sys
+from compat import ensure_pydantic_compat
+
+ensure_pydantic_compat()
+
 try:
     import instagrapi  # noqa: F401
     from instagrapi import exceptions  # noqa: F401
