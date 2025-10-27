@@ -11,19 +11,24 @@ from typing import Iterable, List
 
 os.environ.setdefault("PYDANTIC_V1", "1")
 
-from instagrapi import Client
-from instagrapi.exceptions import (
-    ChallengeRequired,
-    ClientConnectionError,
-    ClientError,
-    ClientLoginError,
-    LoginRequired,
-    PleaseWaitFewMinutes,
-    PrivateError,
-    RateLimitError,
-    TwoFactorRequired,
-    UserNotFound,
-)
+try:
+    from instagrapi import Client
+    from instagrapi.exceptions import (
+        ChallengeRequired,
+        ClientConnectionError,
+        ClientError,
+        ClientLoginError,
+        LoginRequired,
+        PleaseWaitFewMinutes,
+        PrivateError,
+        RateLimitError,
+        TwoFactorRequired,
+        UserNotFound,
+    )
+except ImportError as exc:  # pragma: no cover - se detecta en tiempo de ejecución
+    raise SystemExit(
+        "[ERROR] No se pudo importar instagrapi. Ejecuta ./run.sh para reinstalar las dependencias."
+    ) from exc
 
 from filters import FilterCriteria, apply_filters
 from utils import load_session_meta

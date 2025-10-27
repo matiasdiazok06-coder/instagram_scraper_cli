@@ -63,6 +63,27 @@ EOW
   exit 1
 fi
 
+if ! python - <<'PY'
+import sys
+try:
+    import instagrapi  # noqa: F401
+    from instagrapi import exceptions  # noqa: F401
+except Exception as exc:
+    raise SystemExit(exc)
+PY
+then
+  echo "Reinstalando instagrapi para asegurar módulos completos..."
+  python -m pip install --force-reinstall --no-cache-dir --no-deps "$INSTAGRAPI_SPEC"
+  python - <<'PY'
+import sys
+try:
+    import instagrapi  # noqa: F401
+    from instagrapi import exceptions  # noqa: F401
+except Exception as exc:
+    raise SystemExit("instagrapi no quedó instalado correctamente") from exc
+PY
+fi
+
 unset PIP_PREFER_BINARY
 
 export PYDANTIC_V1=1
