@@ -33,5 +33,11 @@ def ensure_pydantic_compat() -> None:
     )
 
     for attr in required_attrs:
-        if not hasattr(pydantic, attr) and hasattr(pydantic_v1, attr):
+        try:
+            getattr(pydantic, attr)
+            needs_patch = False
+        except Exception:
+            needs_patch = True
+
+        if needs_patch and hasattr(pydantic_v1, attr):
             setattr(pydantic, attr, getattr(pydantic_v1, attr))
