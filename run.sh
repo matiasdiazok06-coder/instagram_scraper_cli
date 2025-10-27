@@ -26,12 +26,16 @@ fi
 # shellcheck disable=SC1090
 source "$VENV_DIR/bin/activate"
 
+export PYDANTIC_V1=1
+
 PY_VERSION=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')
 PY_MAJOR=$(python -c 'import sys; print(sys.version_info.major)')
 PY_MINOR=$(python -c 'import sys; print(sys.version_info.minor)')
 
 export PIP_PREFER_BINARY=1
-python -m pip install --upgrade pip setuptools wheel
+if ! python -m pip install --upgrade pip setuptools wheel; then
+  echo "[WARN] No se pudo actualizar pip/setuptools/wheel. Se continuará con las versiones instaladas." >&2
+fi
 
 if [ "$PY_MAJOR" -gt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -ge 14 ]; }; then
   echo "⚠️  Python $PY_VERSION detectado. Se forzará el uso de ruedas binarias o versiones preliminares."
@@ -85,8 +89,6 @@ PY
 fi
 
 unset PIP_PREFER_BINARY
-
-export PYDANTIC_V1=1
 
 echo -e "\n=== Menú interactivo ==="
 python cli.py

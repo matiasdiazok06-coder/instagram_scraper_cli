@@ -22,6 +22,8 @@ call venv\Scripts\activate.bat || (
   exit /b 1
 )
 
+set PYDANTIC_V1=1
+
 for /f %%v in ('python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')"') do set "PY_VERSION=%%v"
 for /f "tokens=1,2 delims=." %%a in ("%PY_VERSION%") do (
   set "PY_MAJOR=%%a"
@@ -31,7 +33,11 @@ set /a PY_VERSION_NUM=%PY_MAJOR%*100+%PY_MINOR%
 
 set "PIP_PREFER_BINARY=1"
 echo Actualizando herramientas base de instalacion...
-python -m pip install --upgrade pip setuptools wheel || goto :error
+python -m pip install --upgrade pip setuptools wheel
+if errorlevel 1 (
+  echo [WARN] No se pudo actualizar pip/setuptools/wheel. Se continuara con las versiones instaladas.
+  cmd /c exit /b 0
+)
 
 if %PY_VERSION_NUM% GEQ 314 (
   echo ⚠️  Python %PY_VERSION% detectado. Se priorizaran ruedas binarias o versiones preliminares.
@@ -68,7 +74,6 @@ if errorlevel 1 (
 )
 
 set "PIP_PREFER_BINARY="
-set PYDANTIC_V1=1
 
 echo.
 echo === Menú interactivo ===
