@@ -38,6 +38,16 @@ if sys.version_info >= (3, 14):  # pragma: no cover - mensaje informativo
 
 console = Console()
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Herramienta interactiva para scraping de Instagram.",
+    )
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Forzar el menú interactivo (por defecto se muestra si no se pasan argumentos).",
+    )
+    return parser
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -50,6 +60,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     return parser
 
+def render_header(subtitle: str | None = None) -> None:
+    text = APP_HEADER
+    if subtitle:
+        text += f"\n[bold cyan]{subtitle}[/bold cyan]"
+    console.print(Panel(text, expand=False, border_style="magenta", box=box.DOUBLE))
 
 def render_header(subtitle: str | None = None) -> None:
     text = APP_HEADER
