@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import logging
+import os
 import random
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
+
+os.environ.setdefault("PYDANTIC_V1", "1")
 
 from instagrapi import Client
 from instagrapi.exceptions import (
