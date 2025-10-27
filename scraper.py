@@ -23,6 +23,7 @@ from instagrapi.exceptions import (
 )
 
 from filters import FilterCriteria, apply_filters
+from utils import load_session_meta
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,8 @@ class ScraperService:
         self.logged_username: str | None = None
         self._authenticated: bool = False
 
+        self._try_restore_session()
+
     # ------------------------------------------------------------------
     # Login / sesión
     # ------------------------------------------------------------------
@@ -62,6 +65,34 @@ class ScraperService:
         self._authenticated = True
         if username:
             self.logged_username = username
+
+    def _try_restore_session(self) -> None:
+        """Restores the persisted session if it is still valid."""
+        if not self.session_path.exists():
+            return
+
+        try:
+            client = self.ensure_client()
+        except Exception as exc:  # pragma: no cover - fallo inesperado al cargar ajustes
+            logger.warning("No se pudo inicializar el cliente con la sesión guardada: %s", exc)
+            return
+
+        try:
+            client.account_info()
+        except (LoginRequired, ClientLoginError):
+            logger.info("La sesión almacenada requiere autenticación nuevamente.")
+            return
+        except Exception as exc:  # pragma: no cover - errores no anticipados
+            logger.warning("No se pudo validar la sesión almacenada: %s", exc)
+            return
+
+        meta = load_session_meta()
+        username = meta.get("username") if isinstance(meta, dict) else None
+        self.mark_authenticated(username)
+        if username:
+            logger.info("Sesión restaurada automáticamente para %s", username)
+        else:
+            logger.info("Sesión restaurada automáticamente.")
 
     def login(self, username: str, password: str, verification_code: str | None = None) -> None:
         client = self.ensure_client()
